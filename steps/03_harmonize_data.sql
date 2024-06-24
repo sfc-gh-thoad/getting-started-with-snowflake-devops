@@ -1,6 +1,5 @@
 -- Views to transform marketplace data in pipeline
 use role accountadmin;
-use schema quickstart_prod.silver;
 
 /*
 To join the flight and location focused tables 
@@ -112,3 +111,38 @@ create or replace view weather_joined_with_major_cities as
   join zip_codes_in_city zip on city.geo_id = zip.city_geo_id
   join weather_forecast weather on zip.zip_geo_name = weather.postal_code
   group by city.geo_id, city.geo_name, city.total_population;
+
+create or replace view attractions as select
+    city.geo_id,
+    city.geo_name,
+    count(case when category_main = 'Aquarium' THEN 1 END) aquarium_cnt,
+    count(case when category_main = 'Zoo' THEN 1 END) zoo_cnt,
+    count(case when category_main = 'Korean Restaurant' THEN 1 END) korean_restaurant_cnt,
+from us_points_of_interest__addresses.cybersyn.point_of_interest_index poi
+join us_points_of_interest__addresses.cybersyn.point_of_interest_addresses_relationships poi_add on poi_add.poi_id = poi.poi_id
+join us_points_of_interest__addresses.cybersyn.us_addresses address on address.address_id = poi_add.address_id
+join major_us_cities city on city.geo_id = address.id_city
+where true
+    and category_main in ('Aquarium', 'Zoo', 'Korean Restaurant')
+    and id_country = 'country/USA'
+group by city.geo_id, city.geo_name;
+
+create or alter TABLE GOLD.VACATION_SPOTS_Modified (
+	CITY VARCHAR(16777216),
+	AIRPORT VARCHAR(16777216),
+	CO2_EMISSIONS_KG_PER_PERSON FLOAT,
+	PUNCTUAL_PCT FLOAT,
+	AVG_TEMPERATURE_AIR_F FLOAT,
+	AVG_RELATIVE_HUMIDITY_PCT FLOAT,
+	AVG_CLOUD_COVER_PCT FLOAT,
+	PRECIPITATION_PROBABILITY_PCT FLOAT,
+	AQUARIUM_CNT NUMBER(38,0),
+	ZOO_CNT NUMBER(38,0),
+	KOREAN_RESTAURANT_CNT NUMBER(38,0),
+  DUMMY_CNT NUMBER(38,0),
+  DUMMY_CNT_1 NUMBER(38,0),
+  DUMMY_CNT_2 NUMBER(38,0),
+  DUMMY_CNT_3 NUMBER(38,0),
+  DUMMY_CNT_4 NUMBER(38,0),
+  DUMMY_CNT_5 NUMBER(38,0)
+);
